@@ -1,0 +1,6 @@
+client
+.env.example
+node_modules
+Jenkinsfile
+dev.dockerfile
+docker-compose.yml
