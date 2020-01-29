@@ -1,6 +1,6 @@
 pipeline{
     environment {
-        registry = "hub.ahochschulte.de/mymoviedb"
+        registry = "hub.ahochschulte.de/mymoviedbV2"
         registryCredential = "privatehub"
         dockerImage = ''
         dockerFile = 'server/prod.dockerfile'
