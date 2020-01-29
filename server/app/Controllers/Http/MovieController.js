@@ -78,7 +78,8 @@ class MovieController {
         const movie = await Movie.findByOrFail('id', id)
 
         try{
-            const response = await axios.get('/movie/'+movie.tmdb_id, {
+            const tmdbData = this.fetchMovie(movie.tmdb_id)
+            /*const response = await axios.get('/movie/'+movie.tmdb_id, {
                 baseURL: Env.get('TMDB_BASE_URL'),
                 params: {
                     language: Env.get('TMDB_LANGUAGE', 'de'),
@@ -86,7 +87,7 @@ class MovieController {
                     append_to_response: 'credits'
                 }
             })
-            const tmdbData = response.data
+            const tmdbData = response.data*/
 
             let cast = tmdbData.credits.cast.map(item => {
                 return {

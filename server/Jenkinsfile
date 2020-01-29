@@ -3,7 +3,7 @@ pipeline{
         registry = "hub.ahochschulte.de/mymoviedb"
         registryCredential = "privatehub"
         dockerImage = ''
-        dockerFile = 'prod.dockerfile'
+        dockerFile = 'server/prod.dockerfile'
     }
 
     agent any
@@ -21,7 +21,7 @@ pipeline{
         stage('Build image'){
             steps{
                 script {
-                    dockerImage = docker.build(registry + ":$BUILD_NUMBER", "-f "+ dockerFile+" /server")
+                    dockerImage = docker.build(registry + ":$BUILD_NUMBER", "-f "+ dockerFile+" server")
                 }
             }
         }
