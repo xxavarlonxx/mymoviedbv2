@@ -40,7 +40,7 @@ pipeline{
         stage('Publish on remote server'){
             steps{
                 script{
-                    sh 'ssh dev@81.169.193.248 "cd ~/node/mymoviedbV2 && docker-compose pull dev && docker-compose up -d"'
+                    sh 'ssh dev@81.169.193.248 "cd ~/node/mymoviedbV2 && docker-compose pull app && docker-compose up -d"'
                 }
             }
             
