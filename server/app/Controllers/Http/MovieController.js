@@ -188,6 +188,18 @@ class MovieController {
             message: 'Movie with ID '+ id + ' removed successfully'
         })
     }
+
+    async fetchMovie(tmdb_id){
+        const response = await axios.get('/movie/'+tmdb_id, {
+            baseURL: Env.get('TMDB_BASE_URL'),
+            params: {
+                language: Env.get('TMDB_LANGUAGE', 'de'),
+                api_key: Env.get('TMDB_API_KEY'),
+                append_to_response: 'credits'
+            }
+        })
+        return response.data
+    }
 }
 
 module.exports = MovieController
