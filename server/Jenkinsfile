@@ -3,7 +3,7 @@ pipeline{
         registry = "hub.ahochschulte.de/mymoviedb"
         registryCredential = "privatehub"
         dockerImage = ''
-        dockerFile = 'prod.dockerfile'
+        dockerFile = 'server/prod.dockerfile'
     }
 
     agent any

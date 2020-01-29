@@ -18,14 +18,17 @@ const Route = use('Route')
 const Helpers = use("Helpers");
 
 Route.group(() => {
-    Route.post('login', 'LoginController.login')
-    Route.post('signin','LogiNController.signin')
+    Route.post('login', 'LoginController.login').validator('LoginUser')
+    Route.post('signin','LoginController.signin').validator('CreateUser')
 }).middleware(['guest']).prefix('api')
 
 Route.group(() => {
     Route.get('movies', 'MovieController.getAll')
-    Route.post('movies', 'MovieController.create')
-    Route.post('movies/search', 'TMDBController.search')
+    Route.get('movie/:id','MovieController.getMovie')
+    Route.post('movie', 'MovieController.create').validator('CreateMovie')
+    Route.put('movie/:id', 'MovieController.update').validator('UpdateMovie'),
+    Route.delete('movie/:id', 'MovieController.delete')
+    Route.post('movies/search', 'TMDBController.search').validator('SearchMovies')
 }).middleware(['auth']).prefix('api')
 
 Route.any("*", async ({ response }) => {
