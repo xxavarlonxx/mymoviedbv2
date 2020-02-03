@@ -1,18 +1,19 @@
 <template>
-  <v-alert :value="error" dismissible type="error">{{error}}</v-alert>
+  <v-alert :value="message" dismissible type="error">{{message}}</v-alert>
 </template>
 
 <script>
 export default {
   name: "Error",
-  computed: {
-    error() {
-      return this.$store.getters.error;
+  props: {
+    message: {
+      required: true,
+      default: 'An unknown error occured. Please contact the system administrator'
     }
   },
   methods: {
     onClose() {
-      this.$store.commit("clearError");
+      this.$emit('onClose')
     }
   }
 };

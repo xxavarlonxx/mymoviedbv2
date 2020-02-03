@@ -19,7 +19,7 @@ const Helpers = use("Helpers");
 
 Route.group(() => {
     Route.post('login', 'LoginController.login').validator('LoginUser')
-    Route.post('signin','LoginController.signin').validator('CreateUser')
+    Route.post('signup','LoginController.signup').validator('CreateUser')
 }).middleware(['guest']).prefix('api')
 
 Route.group(() => {
@@ -28,7 +28,7 @@ Route.group(() => {
     Route.post('movie', 'MovieController.create').validator('CreateMovie')
     Route.put('movie/:id', 'MovieController.update').validator('UpdateMovie'),
     Route.delete('movie/:id', 'MovieController.delete')
-    Route.post('movies/search', 'TMDBController.search').validator('SearchMovies')
+    Route.post('movies/search', 'MovieController.search').validator('SearchMovies')
 }).middleware(['auth']).prefix('api')
 
 Route.any("*", async ({ response }) => {

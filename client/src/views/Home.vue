@@ -35,13 +35,13 @@
       </v-layout>
       <!-- <v-divider></v-divider> -->
       <v-layout row wrap mt-2 v-if="!searchVisible">
-        <v-flex xs4 sm3 md2 xl1 v-for="item in items" :key="item._id" pa-1>
+        <v-flex xs4 sm3 md2 xl1 v-for="item in items" :key="item.id" pa-1>
           <v-tooltip bottom>
             <v-card
               color="grey lighten-2"
               slot="activator"
               style="cursor: pointer"
-              @click="onItemClicked(item._id)"
+              @click="onItemClicked(item.id)"
             >
               <v-img :src="item.thumbnail_image_url" :aspect_ratio="0.65"></v-img>
             </v-card>
@@ -51,13 +51,13 @@
       </v-layout>
       <v-subheader v-if="searchVisible">Search results</v-subheader>
       <v-layout row wrap mt-2 v-if="searchVisible">
-        <v-flex xs4 sm3 md2 xl1 v-for="item in searchResults" :key="item._id" pa-1>
+        <v-flex xs4 sm3 md2 xl1 v-for="item in filteredItems" :key="item.id" pa-1>
           <v-tooltip bottom>
             <v-card
               color="grey lighten-2"
               slot="activator"
               style="cursor: pointer"
-              @click="onItemClicked(item._id)"
+              @click="onItemClicked(item.id)"
             >
               <v-img :src="item.thumbnail_image_url" :aspect_ratio="0.65"></v-img>
             </v-card>
@@ -85,22 +85,18 @@ export default {
         { title: "Release", icon: "date_range", prop: "release_date" },
         { title: "Added", icon: "add_box", prop: "created_at" }
       ],
+      currentSort: { title: "Title", icon: "title", prop: "title" },
       // filterby: [{title: 'DVD', icon: 'album'},
       //         {title: 'Blu-ray', icon: 'hd'},
       //         {title: 'iTunes', icon: 'video_label'},
       //         {title: 'None', icon:'close'}],
-      searchResults: []
+      loading: false,
+      filteredItems: []
     };
   },
   computed: {
-    items() {
-      return this.$store.getters.getAllItems;
-    },
-    filteredItems() {
-      return this.$store.getters.filteredItems;
-    },
-    currentSort() {
-      return this.$store.getters.currentSort;
+    movies() {
+      return this.$store.getters.movies
     },
     searchVisible() {
       return this.$store.getters.isSearchVisible;
@@ -108,34 +104,47 @@ export default {
     mediums() {
       return this.$store.getters.mediums;
     },
-    loading() {
-      return this.$store.getters.loading;
-    },
+   
     previousSearchText(){
       return this.$store.getters.previousSearchText
     }
   },
   methods: {
     search() {
-      this.searchResults = this.filteredItems.filter(item => {
+      this.filteredItems = this.filteredItems.filter(item => {
         return item.title.toLowerCase().includes(this.searchText.toLowerCase());
       });
     },
-    fetch() {
-      this.$store
-        .dispatch("loadAllMovies")
-        .catch(unauthorized => {
-          this.$router.push('login')
-        });
+    async fetch() {
+      this.loading = true;
+      try{
+        const response = await this.$http.get('/movies')
+        this.$store.commit('setMovies', response.data)
+        this.items = response.data
+        this.filteredItems = response.data
+        sortBy(this.currentSort)
+      }catch(e){
+        this.handleHttpError(e.response)
+      }finally{
+        this.loading = false
+      }
     },
-    sortBy(prop) {
-      this.$store.commit("sortBy", prop);
+    sortBy(selectedItem) {
+      this.currentSort = selectedItem
+      this.items.sort((a, b) => a[selectedItem.prop] < b[selectedItem.prop] ? -1 : 1)
+      this.filteredItems.sort((a, b) => a[selectedItem.prop] < b[selectedItem.prop] ? -1 : 1)
     },
     onItemClicked(id) {
       if(this.searchVisible){
         this.$store.commit('setPreviousSearchText', this.searchText)
       }
       this.$router.push("/movie/" + id);
+    },
+    handleHttpError(response){
+      let status = response.status
+      if(status === 401){
+        this.$router.push('login')
+      }
     }
   },
   created() {

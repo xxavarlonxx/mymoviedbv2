@@ -12,7 +12,7 @@
             <span class="orange--text">DB</span>
           </h1>
           <v-card>
-            <Error/>
+            <Error :message="errorMessage" @onClose="errorMessage = null"/>
             <v-card-text class="pa-4" v-if="visible">
               <v-form ref="form" v-model="valid">
                 <v-text-field
@@ -40,7 +40,7 @@
             </v-card-text>
             <v-card-actions class="pa-4">
               <v-spacer></v-spacer>
-              <SignupDialog @signedup="signedup($event)"/>
+              <SignupDialog @onSignUp="signedup($event)"/>
               <v-btn color="orange" dark large @click="login" :loading="loading" v-if="visible" :disabled="!valid">
                 <v-icon left>lock_open</v-icon>
                 <span>Login</span>
@@ -63,6 +63,8 @@ export default {
     return {
       email: "",
       password: "",
+      loading: false,
+      errorMessage: null,
       rules: {
               required: value => !!value || 'Required.',
               counter: value => value.length >= 6 || 'Min 6 characters.',
@@ -75,24 +77,27 @@ export default {
     };
   },
   computed: {
-    loading() {
-      return this.$store.getters.loading;
-    },
     visible(){
       return !this.$store.getters.signupDialog
     }
   },
   methods: {
-    login() {
-      this.$store
-        .dispatch("login", {
-          email: this.email,
-          password: this.password
-        })
-        .then(() => {
-          this.$router.push("/home");
-        })
-        .catch(err => {});
+    async login() {
+      this.loading = true
+      this.errorMessage = null
+      let formdata = new FormData()
+      formdata.append('email', this.email)
+      formdata.append('password', this.password)
+      try{
+        const response = await this.$http.post('/login', formdata)
+        this.loading = false
+        this.$store.commit("setAccessToken", response.data.token);
+        this.$router.push("/home")
+      }catch(error){
+        this.handleHttpError(error.response)
+      }finally{
+        this.loading = false
+      }
     },
     validate(){
         this.$refs.form.validate()
@@ -102,6 +107,15 @@ export default {
       this.password = event.password
       this.login()
     },
+    handleHttpError(response){
+      let data = response.data
+      let status = response.status
+      if(status === 401){
+        this.errorMessage = 'E-Mail Adresse oder Passwort sind inkorrekt!'
+      }else{
+        this.errorMessage = 'Es ist ein unbekannter Fehler aufgetreten. Versuchen sie es später nochmal'
+      }
+    }
     
   }
 };

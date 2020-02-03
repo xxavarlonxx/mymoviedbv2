@@ -11,7 +11,7 @@ class LoginController {
         return token
     }
     
-    async signin({request, response}){
+    async signup({request, response}){
         const {name, email, password} = request.all()
 
         try{

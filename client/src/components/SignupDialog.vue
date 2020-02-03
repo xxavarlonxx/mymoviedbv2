@@ -1,6 +1,6 @@
 <template>
   <v-dialog scrollable max-width="600px" v-model="dialog">
-    <v-btn flat color="primary" slot="activator" @click="open">Signup</v-btn>
+    <v-btn flat color="primary" slot="activator" @click="visible = true">Signup</v-btn>
     <v-card>
       <v-toolbar color="primary">
         <v-toolbar-title>Signup</v-toolbar-title>
@@ -14,7 +14,7 @@
           <v-container fluid>
             <v-layout column wrap>
               <v-flex xs12>
-                <v-alert :value="error" dismissible type="error" class="mb-3">{{ error }}</v-alert>
+                <v-alert :value="errorMessage" dismissible type="error" class="mb-3">{{ errorMessage }}</v-alert>
               </v-flex>
               <v-form ref="form" v-model="valid">
               <v-flex xs12>
@@ -70,8 +70,10 @@ export default {
       email: "",
       name: "",
       password: "",
-      error: null,
+      errorMessage: null,
       dialog: false,
+      visible: false,
+      loading: false,
       valid: false,
       rules: {
         required: value => !!value || "Required.",
@@ -83,40 +85,44 @@ export default {
       }
     };
   },
-  computed: {
-    loading() {
-      return this.$store.getters.loading;
-    }
-  },
   methods: {
-    save() {
-      this.error = null;
-      let user = {
-        email: this.email,
-        name: this.name,
-        password: this.password
-      };
-      this.$store
-        .dispatch("signup", user)
-        .then(response => {
-          this.$emit("signedup", user);
-        })
-        .catch(err => {
-          this.error = err;
-        });
+    async save() {
+      this.loading = true
+      this.errorMessage = null;
+      let formData = new FormData()
+      formData.append('email', this.email)
+      formData.append('password', this.password)
+      formData.append('name', this.name)
+
+      try{
+        const response = await this.$http.post('/signup', formData)
+        let user = response.data
+        user.password = this.password
+        this.$emit('onSignUp', user)
+        this.close()
+      }catch(e){
+        this.handleHttpError(e)
+      }finally{
+        this.loading = false
+      }
     },
     validate(){
         this.$refs.form.validate()
     },
-    toggleSignupDialog(){
-      this.$store.commit("toggleSignupDialog")
-    },
-    open(){
-        this.toggleSignupDialog()
-    },
     close(){
         this.dialog = false
-        this.toggleSignupDialog()
+        this.visible = false
+    },
+    handleHttpError(error){
+      const response = error.response
+      const data = response.data
+      if(response.status === 400 
+        && data[0].field === 'email' 
+        && data[0].validation == 'unique'){
+          this.errorMessage = 'E-Mail Adresse '+ this.email + ' existiert bereits'
+      }else{
+        this.errorMessage = 'Es ist ein unbekannter Fehler aufgetreten. Versuchen sie es später nochmal'
+      }
     }
   }
 };

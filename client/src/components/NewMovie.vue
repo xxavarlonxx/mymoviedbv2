@@ -13,8 +13,8 @@
             <v-card-text>
                <v-container fluid>
                    <v-layout column wrap>
-                       <v-flex xs12>
-                           <v-alert :value="error" dismissible type="error" class="mb-3">{{ error }}</v-alert>
+                       <v-flex xs12 v-if="errorMessage != null">
+                           <v-alert :value="errorMessage" dismissible type="error" class="mb-3">{{ errorMessage }}</v-alert>
                        </v-flex>
                        <v-flex xs12>
                            <v-text-field :disabled="loading" outline autofocus append-icon="search" label="Search" color="white" v-model="searchText" @keyup.enter='searchTmdb'></v-text-field>
@@ -46,7 +46,7 @@
             <v-card-actions v-if="currentItem !== -1">
                 <v-combobox
                     v-model="select"
-                            :items="items"
+                            :items="mediums"
                             label="Select a medium"
                             required></v-combobox>
                 <v-spacer></v-spacer>
@@ -65,52 +65,62 @@ export default {
             saveloading: false,
             searchText: '',
             select: '',
-            currentItem: -1
+            currentItem: -1,
+            searchResults: [],
+            errorMessage: null
         }
     },
     computed: {
-        searchResults() {
-            return this.$store.getters.getSearchItems
-        },
-        items() {
+        
+        mediums() {
             return this.$store.getters.mediums
         },
-        error(){
-            return this.$store.getters.error
-        }
+        
     },
     methods: {
-        searchTmdb(){
+        async searchTmdb(){
             this.loading = true;
+            this.errorMessage = null
             this.currentItem = -1;
             this.select = ''
-            this.$store.dispatch('searchTmdb', this.searchText).then(()=>{
-                this.loading = false
-            }).catch(unauthorized => {
-                this.loading = false
-                if(unauthorized){
+            let formData = new FormData()
+            formData.append('query', this.searchText)
+            try{
+                const response = await this.$http.post('/movies/search', formData)
+                this.searchResults = response.data
+            }catch(e){
+                if(e.response.status == 401){
                     this.$router.push('/login')
                 }
-            })
+                this.errorMessage = 'An internal error occured. Try it later again'
+            }finally{
+                this.loading = false
+            }
         },
-        save(tmdb_id){
+        async save(tmdb_id){
             this.saveloading = true
             
             let selectedMovie = this.searchResults[this.currentItem]
-            let type = this.items.indexOf(this.select)
-            this.$store.dispatch('addMovie', {tmdb_id: selectedMovie.tmdb_id, type: type}).then(()=> {
+            let type = this.mediums.indexOf(this.select)
+            let formData = new FormData()
+            formData.append('tmdb_id', selectedMovie.tmdb_id)
+            formData.append('type', type)
+            try{
+                await this.$http.post('/movie', formData)
                 this.dialog = false
                 this.searchText = ''
                 this.select = ''
                 this.currentItem = -1
                 this.saveloading = false
                 this.$emit('moviesaved')
-            }).catch(unauthorized => {
-                this.saveloading = false
-                if(unauthorized){
+            }catch(e){
+                if(e.response.status == 401){
                     this.$router.push('/login')
                 }
-            })
+                this.errorMessage = 'An internal error occured. Try it later again'
+            }finally{
+                this.saveloading = false
+            }
         }
     }
 }

@@ -7,9 +7,42 @@ const Env = use('Env')
 
 class MovieController {
 
+    async search({request, response}){
+        const {query} = request.all()
+        try{
+            let results = await this.searchMovie(query)
+
+            let configuration = await this.fetchConfiguration()
+            let baseUrl = configuration.base_url;
+            const preferredPosterSize = Env.get('TMDB_THUMBNAIL_SIZE')
+            let poster_size = 'original'
+            configuration.poster_sizes.forEach(value => {
+                if(value === preferredPosterSize){
+                    poster_size = preferredPosterSize
+                }
+            })
+    
+            let imageBaseUrl = baseUrl + poster_size;
+            results.sort((a,b) => a.popularity > b.popularity ? -1 : 1)
+            let returnList = results.map(movie => {
+                return {
+                    title: movie.title,
+                    release_date: movie.release_date,
+                    tmdb_id: movie.id,
+                    cover_url: imageBaseUrl + movie.poster_path
+                }
+            })
+            return returnList
+        }catch(e){
+            return response.status(500).json({
+                message: 'Internal server error occured. See log for more',
+                error: e
+            })
+        }
+    }
+
     async getAll({auth}){
         const user = await auth.getUser()
-        console.log(user)
         let movies = await Movie.findByOrFail('user_id', user.id)
         return movies
     }
@@ -17,17 +50,10 @@ class MovieController {
     async create({request, response, auth}){
         const {tmdb_id, type} = request.all()
         const user= await auth.getUser()
-        //let user = await User.findByOrFail('email', userAuth.email)
 
         try{
-            const response = await axios.get('/configuration', {
-                baseURL: Env.get('TMDB_BASE_URL'),
-                params: {
-                    api_key: Env.get('TMDB_API_KEY')
-                }
-            })
-
-            const configuration = response.data.images
+            
+            const configuration = await this.fetchConfiguration()
             const preferredPosterSize = Env.get('TMDB_THUMBNAIL_SIZE')
             let poster_size = 'original'
             configuration.poster_sizes.forEach(value => {
@@ -39,15 +65,7 @@ class MovieController {
             let imageBaseUrl = configuration.base_url + 'original'
             let imageThumbnailBaseUrl = configuration.base_url + poster_size
 
-            const response2 = await axios.get('/movie/'+tmdb_id, {
-                baseURL: Env.get('TMDB_BASE_URL'),
-                params: {
-                    language: Env.get('TMDB_LANGUAGE', 'de'),
-                    api_key: Env.get('TMDB_API_KEY'),
-                    append_to_response: 'credits'
-                }
-            })
-            const tmdbData = response2.data
+            const tmdbData = await this.fetchMovie(tmdb_id)
 
             var movie = await Movie.create({
                 title: tmdbData.title,
@@ -78,38 +96,15 @@ class MovieController {
         const movie = await Movie.findByOrFail('id', id)
 
         try{
-            const tmdbData = this.fetchMovie(movie.tmdb_id)
-            /*const response = await axios.get('/movie/'+movie.tmdb_id, {
-                baseURL: Env.get('TMDB_BASE_URL'),
-                params: {
-                    language: Env.get('TMDB_LANGUAGE', 'de'),
-                    api_key: Env.get('TMDB_API_KEY'),
-                    append_to_response: 'credits'
-                }
-            })
-            const tmdbData = response.data*/
-
-            let cast = tmdbData.credits.cast.map(item => {
-                return {
-                    name: item.name,
-                    character: item.character
-                }
-            })
-
-            if(cast.length > 4){
-                cast = cast.slice(0,4)
-            }
-
-            let crew = tmdbData.credits.crew.map(item => {
-                return {
-                    name: item.name,
-                    job: item.job
-                }
-            })
-
-            if(crew.length > 4){
-                crew = crew.slice(0,4)
-            }
+            const tmdbData = await this.fetchMovie(movie.tmdb_id)
+            
+            //Cast
+            let cast = this.mapCastCrew(tmdbData.credits.cast)
+            cast = this.sliceArray(cast, 4)
+        
+            //Crew
+            let crew = this.mapCastCrew(tmdbData.credits.crew)
+           crew =  this.sliceArray(crew, 4)
 
             let genres = tmdbData.genres.map(item => item.name)
             let directors = tmdbData.credits.crew.filter(item => item.job === 'Director')
@@ -117,13 +112,9 @@ class MovieController {
             let producers = tmdbData.credits.crew.filter(item => item.job === 'Producer')
             producers = producers.map(item => item.name)
 
-            if(directors.length > 4){
-                directors = directors.slice(0,4)
-            }
+            directors = this.sliceArray(directors, 4)
 
-            if(producers.length > 4){
-                producers = producers.slice(0,4)
-            }
+            producers = this.sliceArray(producers, 4)
 
             let production_companies = tmdbData.production_companies
             production_companies.sort((a, b) => a.id > b.id ? 1 : -1)
@@ -200,6 +191,48 @@ class MovieController {
             }
         })
         return response.data
+    }
+
+    async fetchConfiguration(){
+        const response = await axios.get('/configuration', {
+            baseURL: Env.get('TMDB_BASE_URL'),
+            params: {
+                api_key: Env.get('TMDB_API_KEY')
+            }
+        })
+
+       return response.data.images
+    }
+
+    async searchMovie(query){
+        const response = await axios.get('/search/movie',{
+            baseURL: Env.get('TMDB_BASE_URL'),
+            params:{
+                language: Env.get('TMDB_LANGUAGE', 'de'),
+                api_key: Env.get('TMDB_API_KEY'),
+                query,
+                region: ''+Env.get('TMDB_LANGUAGE', 'de').toUpperCase()
+            }
+        })
+        return response.data.results
+    }
+
+    sliceArray(array, maxSize){
+        var result = array
+        if(array.length > maxSize){
+            result = result.slice(0, maxSize)
+        }
+        return result
+    }
+
+    mapCastCrew(array){
+        let result = array.map(item => {
+            return {
+                name: item.name,
+                character: item.character
+            }
+        })
+        return result
     }
 }
 
