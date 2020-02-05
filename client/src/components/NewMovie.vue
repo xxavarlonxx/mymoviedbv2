@@ -1,7 +1,10 @@
 <template>
     <v-dialog scrollable max-width="600px" v-model="dialog">
-        <v-btn fab absolute bottom left color="primary" slot="activator">
+        <!--v-btn fab absolute bottom left >
             <v-icon>add</v-icon>
+        </v-btn-->
+        <v-btn rounded color="primary" slot="activator">
+            New Movie
         </v-btn>
         <v-card>
             <v-toolbar color="primary">

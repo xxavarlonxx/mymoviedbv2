@@ -6,11 +6,11 @@
 export default {
   data() {
     return {
-      show: false,
-      message: ""
+      show: true,
     };
   },
-  created() {
+  props: ['message'],
+  /*created() {
     this.$store.watch(
       state => state.success,
       () => {
@@ -22,7 +22,7 @@ export default {
         }
       }
     );
-  }
+  }*/
 };
 </script>
 

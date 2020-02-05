@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="290" :value="dialog" persistent >
+    <v-dialog max-width="290" :value="visible" persistent >
         <v-toolbar color="error" dark flat>
             <v-toolbar-title>
                 <div class="title">{{ title }}</div>
@@ -19,8 +19,8 @@
 <script>
 export default {
     computed: {
-        dialog(){
-            return this.$store.getters.confirmDialog
+        visible(){
+            return this.$store.getters.showConfirmDialog
         }
     },
     props: ['title', 'text'],

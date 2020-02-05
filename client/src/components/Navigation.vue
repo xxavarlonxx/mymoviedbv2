@@ -1,5 +1,5 @@
 <template>
-  <v-toolbar extended>
+  <v-toolbar :extended="$route.name == 'movie'">
     <v-btn @click="onBack" large icon v-if="$route.name === 'movie' || searchVisible">
       <v-icon large>arrow_back</v-icon>
     </v-btn>
@@ -19,12 +19,21 @@
     <v-btn icon v-if="!searchVisible && $route.name !== 'movie'" large @click="toggleSearch">
       <v-icon large>search</v-icon>
     </v-btn>
-    <v-btn icon v-if="!searchVisible && $route.name !== 'movie'" large @click="refresh">
-      <v-icon large>autorenew</v-icon>
-    </v-btn>
-    <v-btn icon large @click="logout">
-      <v-icon large>input</v-icon>
-    </v-btn>
+    <v-menu offset-y v-if="!searchVisible && $route.name !== 'movie'" transition="slide-y-transition">
+      <v-btn slot="activator" fab depressed  >
+        <v-icon  >more_vert</v-icon>
+      </v-btn>
+      <v-list>
+        <v-list-tile v-for="(item, index) in menuItems" :key="index" @click="onMore(index)" avatar>
+          <v-list-tile-avatar>
+            <v-icon>{{ item.icon }}</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-content>
+            <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+      </v-list>
+    </v-menu>
   </v-toolbar>
 </template>
 
@@ -33,15 +42,35 @@ import NewMovie from "./NewMovie";
 export default {
   name: "Navigation",
   components: { NewMovie },
+  data(){
+    return {
+      menuItems: [
+        {
+          icon: 'autorenew',
+          title: 'Refresh'
+        },
+        {
+          icon: 'input',
+          title: 'Logout'
+        }
+      ]
+    }
+  },
   computed: {
     searchVisible() {
       return this.$store.getters.isSearchVisible;
     },
-    currentMovie(){
-      return this.$store.getters.movie
-    },
   },
   methods: {
+    onMore(index){
+      const clickedItem = this.menuItems[index]
+      if(clickedItem.title === 'Refresh'){
+        this.refresh()
+      }
+      if(clickedItem.title === 'Logout'){
+        this.logout()
+      }
+    },
     logout() {
       this.$store.dispatch("logout").then(() => {
         this.$router.push("/login");
@@ -51,19 +80,17 @@ export default {
       this.$store.commit("toggleSearch");
     },
     refresh() {
-      this.$store.dispatch("loadAllMovies").catch(err => {
-        console.log(err);
-      });
+      this.$store.dispatch("fetchMovies")
     },
     onDeleteMovie(){
-      if(this.currentMovie !== null){
+      //if(this.currentMovie !== null){
           this.$store.commit("toggleConfirmDialog");
-      }
+      //}
     },
     onEditMovie(){
-      if(this.currentMovie !== null){
+      //if(this.currentMovie !== null){
         this.$store.commit('toggleEditDialog')
-      }
+      //}
     },
     onBack() {
       if (this.$route.name === "movie") {

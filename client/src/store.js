@@ -1,28 +1,24 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import axios from 'axios'
+import http from './api.config'
 
 Vue.use(Vuex)
-/*
-axios.defaults.baseURL = '/api';
-axios.defaults.headers.post['Content-Type'] = 'application/json';
-*/
 export default new Vuex.Store({
   state: {
       access_token: localStorage.getItem('access_token') || null,
-      expiresIn: localStorage.getItem('expiresIn') || null,
+      //expiresIn: localStorage.getItem('expiresIn') || null,
       movies: [],
+      filteredMovies: [],
       searchItems: [],
       searchVisible: false,
       previousSearchText: "",
-      error: null,
+      errorMessage: null,
       loading: false,
       mediums: ['DVD', 'Blu-ray', 'iTunes'],
       currentSort: {title: 'Title', icon: 'title', prop: 'title'},
-      filteredItems: [],
       movie: null,
-      confirmDialog: false,
-      editDialog: false,
+      showConfirmDialog: false,
+      showEditDialog: false,
       signupDialog: false,
       success: "",
   },
@@ -45,11 +41,11 @@ export default new Vuex.Store({
     isSearchVisible: (state) => {
       return state.searchVisible
     },
-    confirmDialog(state){
-      return state.confirmDialog
+    showConfirmDialog(state){
+      return state.showConfirmDialog
     },
-    editDialog(state){
-      return state.editDialog
+    showEditDialog(state){
+      return state.showEditDialog
     },
     signupDialog(state){
       return state.signupDialog
@@ -60,8 +56,8 @@ export default new Vuex.Store({
     loggedIn(state){
       return state.access_token !== null
     },
-    error(state){
-      return state.error
+    errorMessage(state){
+      return state.errorMessage
     },
     loading(state){
       return state.loading
@@ -72,8 +68,8 @@ export default new Vuex.Store({
     currentSort(state){
       return state.currentSort
     },
-    filteredItems(state){
-      return state.filteredItems
+    filteredMovies(state){
+      return state.filteredMovies
     }
   },
   mutations: {
@@ -105,31 +101,28 @@ export default new Vuex.Store({
       state.searchVisible = !state.searchVisible
     },
     toggleConfirmDialog(state){
-      state.confirmDialog = !state.confirmDialog
+      state.showConfirmDialog = !state.showConfirmDialog
     },
     toggleEditDialog(state){
-      state.editDialog = !state.editDialog
+      state.showEditDialog = !state.showEditDialog
     },
     setLoading(state, loading){
       state.loading = loading
     },
-    setError(state, error){
-      state.error = error
+    setErrorMessage(state, errorMessage){
+      state.errorMessage = errorMessage
     },
-    clearError(state){
-      state.error = null
-    },
-    setSuccess(state, success){
-      state.success = success
-    },
+    
+    
     sortBy(state, sort){
       if(sort !== undefined){
         state.currentSort = sort
       }
-      state.items.sort((a, b) => a[state.currentSort.prop] < b[state.currentSort.prop] ? -1 : 1)
+      state.movies.sort((a, b) => a[state.currentSort.prop] < b[state.currentSort.prop] ? -1 : 1)
+      state.filteredMovies.sort((a, b) => a[state.currentSort.prop] < b[state.currentSort.prop] ? -1 : 1)
     },
-    setFilteredItems(state){
-      state.filteredItems = state.items
+    setFilteredMovies(state, filteredMovies){
+      state.filteredMovies = filteredMovies
     }
   },
   actions: {
@@ -143,7 +136,20 @@ export default new Vuex.Store({
         })
       },
       async fetchMovies({commit, state, dispatch}){
-        const response = await this.$http.get('/movies')
+        commit('setLoading', true)
+        commit('setErrorMessage', null)
+        try{
+          const response = await this.$http.get('/movies')
+          console.log(response.data)
+          commit('setMovies', response.data)
+          commit('setFilteredMovies', response.data)
+        }catch(e){
+          console.log(e)
+            console.log(e.response.data)
+            commit('setErrorMessage', 'An unknown error occured. Try it later again or contact the system administrator. ('+ e.response.status+')')
+        }finally{
+          commit('setLoading', false)
+        }
       },
       getMovie({commit, state, dispatch}, id){
         return new Promise((resolve, reject) => {

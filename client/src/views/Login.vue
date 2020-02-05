@@ -41,7 +41,7 @@
             <v-card-actions class="pa-4">
               <v-spacer></v-spacer>
               <SignupDialog @onSignUp="signedup($event)"/>
-              <v-btn color="orange" dark large @click="login" :loading="loading" v-if="visible" :disabled="!valid">
+              <v-btn color="orange" dark large @click="login" :loading="loading" v-if="visible" :disabled="!valid" block>
                 <v-icon left>lock_open</v-icon>
                 <span>Login</span>
               </v-btn>
@@ -90,7 +90,6 @@ export default {
       formdata.append('password', this.password)
       try{
         const response = await this.$http.post('/login', formdata)
-        this.loading = false
         this.$store.commit("setAccessToken", response.data.token);
         this.$router.push("/home")
       }catch(error){

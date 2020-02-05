@@ -7,7 +7,6 @@ export default {
   name: "Error",
   props: {
     message: {
-      required: true,
       default: 'An unknown error occured. Please contact the system administrator'
     }
   },

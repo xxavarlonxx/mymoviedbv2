@@ -1,7 +1,7 @@
 <template>
   <v-content>
     <v-container fluid>
-      <Error/>
+      <Error v-if="errorMessage" :message="errorMessage"/>
       <v-layout row wrap justify-center v-if="searchVisible">
         <v-flex xs12 lg6 xl4>
           <v-text-field
@@ -16,7 +16,7 @@
         </v-flex>
       </v-layout>
       <v-layout row mb-2 justify-end>
-        <v-menu offset-y v-if="!searchVisible && items.length > 0" transition="slide-y-transition">
+        <v-menu offset-y v-if="!searchVisible && movies.length > 0" transition="slide-y-transition">
           <v-btn color="primary" slot="activator" dark small fab>
             <v-icon>sort</v-icon>
           </v-btn>
@@ -35,7 +35,7 @@
       </v-layout>
       <!-- <v-divider></v-divider> -->
       <v-layout row wrap mt-2 v-if="!searchVisible">
-        <v-flex xs4 sm3 md2 xl1 v-for="item in items" :key="item.id" pa-1>
+        <v-flex xs4 sm3 md2 xl1 v-for="item in movies" :key="item.id" pa-1>
           <v-tooltip bottom>
             <v-card
               color="grey lighten-2"
@@ -51,7 +51,7 @@
       </v-layout>
       <v-subheader v-if="searchVisible">Search results</v-subheader>
       <v-layout row wrap mt-2 v-if="searchVisible">
-        <v-flex xs4 sm3 md2 xl1 v-for="item in filteredItems" :key="item.id" pa-1>
+        <v-flex xs4 sm3 md2 xl1 v-for="item in filterResults" :key="item.id" pa-1>
           <v-tooltip bottom>
             <v-card
               color="grey lighten-2"
@@ -85,18 +85,24 @@ export default {
         { title: "Release", icon: "date_range", prop: "release_date" },
         { title: "Added", icon: "add_box", prop: "created_at" }
       ],
-      currentSort: { title: "Title", icon: "title", prop: "title" },
-      // filterby: [{title: 'DVD', icon: 'album'},
-      //         {title: 'Blu-ray', icon: 'hd'},
-      //         {title: 'iTunes', icon: 'video_label'},
-      //         {title: 'None', icon:'close'}],
-      loading: false,
-      filteredItems: []
+      //currentSort: { title: "Title", icon: "title", prop: "title" },
+      filterResults: []
+      //loading: false,
+      //filteredItems: []
     };
   },
   computed: {
     movies() {
       return this.$store.getters.movies
+    },
+    filteredMovies(){
+      return this.$store.getters.filteredMovies
+    },
+    errorMessage(){
+      return this.$store.getters.errorMessage
+    },
+    loading(){
+      return this.$store.getters.loading
     },
     searchVisible() {
       return this.$store.getters.isSearchVisible;
@@ -104,35 +110,21 @@ export default {
     mediums() {
       return this.$store.getters.mediums;
     },
-   
     previousSearchText(){
       return this.$store.getters.previousSearchText
     }
   },
   methods: {
     search() {
-      this.filteredItems = this.filteredItems.filter(item => {
+      this.filterResults = this.filteredItems.filter(item => {
         return item.title.toLowerCase().includes(this.searchText.toLowerCase());
       });
     },
-    async fetch() {
-      this.loading = true;
-      try{
-        const response = await this.$http.get('/movies')
-        this.$store.commit('setMovies', response.data)
-        this.items = response.data
-        this.filteredItems = response.data
-        sortBy(this.currentSort)
-      }catch(e){
-        this.handleHttpError(e.response)
-      }finally{
-        this.loading = false
-      }
+    fetch() {
+      this.$store.dispatch('fetchMovies')
     },
     sortBy(selectedItem) {
-      this.currentSort = selectedItem
-      this.items.sort((a, b) => a[selectedItem.prop] < b[selectedItem.prop] ? -1 : 1)
-      this.filteredItems.sort((a, b) => a[selectedItem.prop] < b[selectedItem.prop] ? -1 : 1)
+      this.$store.commit('sortBy', selectedItem)
     },
     onItemClicked(id) {
       if(this.searchVisible){
@@ -140,19 +132,12 @@ export default {
       }
       this.$router.push("/movie/" + id);
     },
-    handleHttpError(response){
-      let status = response.status
-      if(status === 401){
-        this.$router.push('login')
-      }
-    }
   },
   created() {
     if(this.searchVisible){
       this.searchText = this.previousSearchText
       this.search()
     }
-
      this.fetch();
   }
 };

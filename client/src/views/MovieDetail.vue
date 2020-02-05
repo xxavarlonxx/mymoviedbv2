@@ -1,10 +1,10 @@
 <template>
   <v-content>
-    <v-container v-if="item !== null" mt-4>
-      <Error class="mb-3"/>
+    <v-container v-if="movie !== null" mt-4>
+      <Error class="mb-3" v-if="hasError"/>
       <v-layout row wrap mb-2>
         <v-flex xs12 sm4 md6 lg3 mb-0>
-          <v-img :src="item.cover_image_url" :aspect_ratio="0.65"></v-img>
+          <v-img :src="movie.cover_image_url" :aspect_ratio="0.65"></v-img>
         </v-flex>
         <v-flex xs12 sm8 md6 lg9>
           <v-container fluid style="background: transparent">
@@ -13,42 +13,42 @@
                 <div
                   class="display-1 font-weight-bold text-truncate"
                   style="display: block"
-                >{{ item.title+' ('+ new Date(item.release_date).getFullYear()+')' }}</div>
+                >{{ movie.title+' ('+ new Date(movie.release_date).getFullYear()+')' }}</div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Runtime:
-                  <span class="white--text">{{ item.runtime + ' min' }}</span>
+                  <span class="white--text">{{ movie.runtime + ' min' }}</span>
                 </div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Publisher:
-                  <span class="white--text">{{ item.production_company }}</span>
+                  <span class="white--text">{{ movie.production_company }}</span>
                 </div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Directors:
-                  <span class="white--text">{{ item.directors.join(', ') }}</span>
+                  <span class="white--text">{{ movie.directors.join(', ') }}</span>
                 </div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Producers:
-                  <span class="white--text">{{ item.producers.join(', ') }}</span>
+                  <span class="white--text">{{ movie.producers.join(', ') }}</span>
                 </div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Genres:
-                  <span class="white--text">{{ item.genres.join(', ') }}</span>
+                  <span class="white--text">{{ movie.genres.join(', ') }}</span>
                 </div>
               </v-flex>
               <v-flex xs12 class="mb-2">
                 <div class="body-2 grey--text">
                   Medium:
-                  <span class="white--text">{{ mediums[item.type] }}</span>
+                  <span class="white--text">{{ mediums[movie.type] }}</span>
                 </div>
               </v-flex>
               <v-flex xs12>
@@ -57,7 +57,7 @@
                     <v-flex xs12 md6 class="pr-3 mb-3">
                       <div class="body-1 grey--text">Cast</div>
                       <v-divider class="mb-1"></v-divider>
-                      <div v-for="cast in item.cast" :key="cast.name" class="body1">
+                      <div v-for="cast in movie.cast" :key="cast.name" class="body1">
                         {{ cast.name }}
                         <span class="grey--text">{{'('+cast.character+')'}}</span>
                       </div>
@@ -65,7 +65,7 @@
                     <v-flex xs12 md6 class="pr-3 mb-3">
                       <div class="body-1 grey--text">Crew</div>
                       <v-divider class="mb-1"></v-divider>
-                      <div v-for="crew in item.crew" :key="crew.name" class="body1">
+                      <div v-for="crew in movie.crew" :key="crew.name" class="body1">
                         {{ crew.name }}
                         <span class="grey--text">{{'('+crew.job+')'}}</span>
                       </div>
@@ -97,16 +97,16 @@
           <v-divider></v-divider>
         </v-flex>
         <v-flex xs12>
-          <p class="body-1">{{ item.description}}</p>
+          <p class="body-1">{{ movie.description}}</p>
         </v-flex>
         <!-- </v-layout>
         </v-container>-->
       </v-layout>
     </v-container>
     <Loading :value="loading" message="Loading details..."/>
-    <ConfirmDialog title="Delete" text="Do you really want to delete the movie?" @confirmclicked="onDelete($event)" v-if="confirmDialog"/>
-    <EditDialog :currentMedium="mediums[item.type]" @clickedsave="onEdit($event)" v-if="editDialog"/>
-    <Success  />
+    <ConfirmDialog title="Delete" text="Do you really want to delete the movie?" @confirmclicked="onDelete($event)" v-if="showConfirmDialog"/>
+    <EditDialog :currentMedium="mediums[movie.type]" @onSave="onEdit($event)" v-if="showEditDialog"/>
+    <Success v-if="hasSuccess" :message="successMessage"  />
   </v-content>
 </template>
 
@@ -119,58 +119,78 @@ import Success from '../components/Success';
 
 export default {
   components: { Loading, Error, ConfirmDialog, EditDialog, Success },
+  data(){
+    return {
+      loading: false,
+      movie: null,
+      hasError: false,
+      hasSuccess: false,
+      successMessage: null,
+    }
+  },
   computed: {
-    item() {
-      return this.$store.getters.movie;
-    },
     mediums() {
       return this.$store.getters.mediums;
     },
-    loading() {
-      return this.$store.getters.loading;
+    showConfirmDialog() {
+      return this.$store.getters.showConfirmDialog;
     },
-    confirmDialog() {
-      return this.$store.getters.confirmDialog;
-    },
-    editDialog(){
-      return this.$store.getters.editDialog;
+    showEditDialog(){
+      return this.$store.getters.showEditDialog;
     }
   },
   methods: {
-    onEdit(event){
+    async onEdit(event){
       let type = this.mediums.indexOf(event)
-      this.$store.dispatch('updateMovie', {id: this.item._id, type}).then(()=> {
-        this.refresh()
-      }).catch(unauthorized => {
-          if(unauthorized){
-            this.$router.push('/login')
-          }
-      })
+      this.loading = true
+      this.hasError = false
+      let formData = new FormData()
+      formData.append('type', type)
+      try{
+        await this.$http.put('/movie/'+this.movie.id, formData)
+        await this.fetch()
+        this.hasSuccess = true
+        this.successMessage = "Saved!"
+      }catch(e){
+        this.hasError = true
+      }finally{
+        this.loading = false
+        this.$store.commit('toggleEditDialog')
+      }
     },
-    onDelete(event) {
+    async onDelete(event) {
       if (event) {
-        this.$store.dispatch("deleteMovie", this.item._id).then(() => {
-          window.history.length > 1
+        this.loading = true
+        this.hasError = false
+        try{
+          await this.$http.delete('/movie/'+this.movie.id)
+           window.history.length > 1
             ? this.$router.go(-1)
             : this.$router.push("/home");
-        }).catch(unauthorized => {
-          if(unauthorized){
-            this.$router.push('/login')
-          }
-      })
+        }catch(e){
+          this.hasError = true
+        }finally{
+          this.loading = false
+         this.$store.commit("toggleConfirmDialog");
+        }
       }
-      this.$store.commit("toggleConfirmDialog");
+      
     },
-    refresh(){
-      this.$store.dispatch("getMovie", this.$route.params.id).catch(unauthorized => {
-          if(unauthorized){
-            this.$router.push('/login')
-          }
-      });
+    async fetch(){
+      this.loading = true
+      this.hasError = false
+      try{
+        const response = await this.$http.get('/movie/'+ this.$route.params.id)
+        this.movie = response.data
+      }catch(e){
+        this.hasError = true
+      }finally{
+        this.loading = false
+      }
     }
   },
   created() {
-    this.refresh()
+    this.fetch()
   }
 };
 </script>

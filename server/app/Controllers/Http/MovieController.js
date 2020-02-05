@@ -43,7 +43,7 @@ class MovieController {
 
     async getAll({auth}){
         const user = await auth.getUser()
-        let movies = await Movie.findByOrFail('user_id', user.id)
+        let movies = await Movie.query().where('user_id', '=', user.id).fetch()
         return movies
     }
 

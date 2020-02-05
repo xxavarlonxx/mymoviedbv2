@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="300" :value="dialog" persistent>
+    <v-dialog max-width="300" :value="visible" persistent>
         <v-toolbar flat color="primary" dark>
             <v-toolbar-title>
                 <div class="title">Edit</div>
@@ -9,7 +9,7 @@
             <v-card-text>
                 <v-combobox
                     v-model="currentMedium"
-                        :items="items"
+                        :items="mediums"
                         label="Select a medium"
                         required></v-combobox>
             </v-card-text>
@@ -31,11 +31,11 @@ export default {
     },
     props: ['currentMedium'],
     computed: {
-        items(){
+        mediums(){
             return this.$store.getters.mediums
         },
-        dialog(){
-            return this.$store.getters.editDialog
+        visible(){
+            return this.$store.getters.showEditDialog
         }
     },
     methods: {
@@ -43,8 +43,8 @@ export default {
             this.$store.commit('toggleEditDialog')
         },
         onSave(){
-            this.$emit('clickedsave', this.currentMedium)
-            this.$store.commit('toggleEditDialog')
+            this.$emit('onSave', this.currentMedium)
+            //this.$store.commit('toggleEditDialog')
         }
     }
 
