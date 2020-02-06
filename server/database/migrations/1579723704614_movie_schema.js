@@ -11,7 +11,7 @@ class MovieSchema extends Schema {
       table.text('description')
       table.string('cover_image_url')
       table.string('thumbnail_image_url')
-      table.date('release_Date')
+      table.date('release_date')
       table.integer('type').unsigned()
       table.integer('tmdb_id').unsigned()
       table

@@ -99,12 +99,12 @@ class MovieController {
             const tmdbData = await this.fetchMovie(movie.tmdb_id)
             
             //Cast
-            let cast = this.mapCastCrew(tmdbData.credits.cast)
+            let cast = this.mapCast(tmdbData.credits.cast)
             cast = this.sliceArray(cast, 4)
         
             //Crew
-            let crew = this.mapCastCrew(tmdbData.credits.crew)
-           crew =  this.sliceArray(crew, 4)
+            let crew = this.mapCrew(tmdbData.credits.crew)
+            crew =  this.sliceArray(crew, 4)
 
             let genres = tmdbData.genres.map(item => item.name)
             let directors = tmdbData.credits.crew.filter(item => item.job === 'Director')
@@ -225,11 +225,21 @@ class MovieController {
         return result
     }
 
-    mapCastCrew(array){
+    mapCast(array){
         let result = array.map(item => {
             return {
                 name: item.name,
                 character: item.character
+            }
+        })
+        return result
+    }
+
+    mapCrew(array){
+        let result = array.map(item => {
+            return {
+                name: item.name,
+                job: item.job
             }
         })
         return result
