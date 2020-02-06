@@ -1,6 +1,7 @@
-import Vue from 'vue';
+
 import axios from 'axios';
 import store from './store';
+import router from './router'
 
 let http = axios.create({
     baseURL: '/api',
@@ -26,7 +27,6 @@ http.interceptors.request.use(config => {
 http.interceptors.response.use(response => response, error => {
     if (error.response.status === 401) {
         router.push('login');
-
     }
     return Promise.reject(error)
 }) 

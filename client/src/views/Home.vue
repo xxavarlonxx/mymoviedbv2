@@ -116,7 +116,7 @@ export default {
   },
   methods: {
     search() {
-      this.filterResults = this.filteredItems.filter(item => {
+      this.filterResults = this.filteredMovies.filter(item => {
         return item.title.toLowerCase().includes(this.searchText.toLowerCase());
       });
     },

@@ -100,7 +100,7 @@ export default {
                 this.loading = false
             }
         },
-        async save(tmdb_id){
+        async save(){
             this.saveloading = true
             
             let selectedMovie = this.searchResults[this.currentItem]

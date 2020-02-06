@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import http from './api.config'
 
 Vue.use(Vuex)
 export default new Vuex.Store({
@@ -135,7 +134,7 @@ export default new Vuex.Store({
           resolve()
         })
       },
-      async fetchMovies({commit, state, dispatch}){
+      async fetchMovies({commit}){
         commit('setLoading', true)
         commit('setErrorMessage', null)
         try{
@@ -150,130 +149,6 @@ export default new Vuex.Store({
         }finally{
           commit('setLoading', false)
         }
-      },
-      getMovie({commit, state, dispatch}, id){
-        return new Promise((resolve, reject) => {
-          commit('clearError')
-          commit('setLoading', true)
-          axios.get('/movies/'+id, { headers: { Authorization: state.access_token } })
-          .then(response => {
-            let movie = response.data.result.data
-            commit('setLoading', false)
-            commit('setMovie', movie)
-            resolve()
-          }).catch(err => {
-              commit('setLoading', false)
-              if(err.response.status === 401){
-                dispatch('logout').then(() => {
-                  commit('setError', err.response.data.error.message)
-                  reject(true)
-                })
-              }else{
-                commit('setError', err.response.data.error.message)
-                reject(false)
-              }
-          })
-        })
-      },
-      searchTmdb({commit, state, dispatch}, query){
-        return new Promise((resolve, reject)=> {
-            commit('clearError')
-            axios.post('/movies/search',{
-              query
-            }, { headers: { Authorization: state.access_token } }).then(response => {
-              let searchResult = response.data.result.data
-              commit('setSearchItems', searchResult)
-              resolve()
-            }).catch(err => {
-              if(err.response.status === 401){
-                dispatch('logout').then(() => {
-                  commit('setError', err.response.data.error.message)
-                  reject(true)
-                })
-              }else{
-                commit('setError', err.response.data.error.message)
-                reject(false)
-              }
-            })
-        })
-        
-      },
-      addMovie({commit, state, dispatch}, movie){
-        return new Promise((resolve, reject)=>{
-          commit('clearError')
-          axios.post('/movies/create', {
-            tmdb_id: movie.tmdb_id,
-            type: movie.type
-          },{ headers: { Authorization: state.access_token } })
-          .then(response => {
-            commit('setSearchItems', [])
-            commit('setSuccess', response.data.result.message)
-            resolve()
-          }).catch(err => {
-            if(err.response.status === 401){
-              dispatch('logout').then(() => {
-                commit('setError', err.response.data.error.message)
-                reject(true)
-              })
-            }else{
-              commit('setError', err.response.data.error.message)
-              reject(false)
-            }
-          })
-        })
-      },
-      updateMovie({commit, state, dispatch}, payload){
-        return new Promise((resolve, reject)=> {
-          commit('clearError')
-          commit('setLoading', true)
-          axios.put('/movies/'+payload.id, {
-            type: payload.type
-          },{ headers: { Authorization: state.access_token } })
-          .then(response=>{
-             commit('setLoading', false)
-             commit('setSuccess', response.data.result.message)
-             resolve()
-          })
-          .catch(err => {
-            commit('setLoading', false)
-            if(err.response.status === 401){
-              dispatch('logout').then(() => {
-                commit('setError', err.response.data.error.message)
-                reject(true)
-              })
-            }else{
-              commit('setError', err.response.data.error.message)
-              reject(false)
-            }
-          })
-        })
-      },
-      deleteMovie({commit, state, dispatch}, id){
-        return new Promise((resolve, reject) => {
-          commit('clearError')
-          commit('setLoading', true)
-          axios.delete('/movies/'+id, { headers: { Authorization: state.access_token } })
-          .then(response => {
-            commit('setLoading', false)
-            commit('removeMovie', id)
-            resolve()
-            setTimeout(()=> {
-             commit('setSuccess', response.data.result.message)
-            }, 500)
-          })
-          .catch(err => {
-            commit('setLoading', false)
-            if(err.response.status === 401){
-              dispatch('logout').then(() => {
-                commit('setError', err.response.data.error.message)
-                reject(true)
-              })
-            }else{
-              commit('setError', err.response.data.error.message)
-              reject(false)
-            }
-          })
-        })
       },
   }
 })

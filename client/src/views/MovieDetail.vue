@@ -171,10 +171,9 @@ export default {
           this.hasError = true
         }finally{
           this.loading = false
-         this.$store.commit("toggleConfirmDialog");
         }
       }
-      
+      this.$store.commit('toggleConfirmDialog')
     },
     async fetch(){
       this.loading = true
