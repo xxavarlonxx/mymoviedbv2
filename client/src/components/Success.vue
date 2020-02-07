@@ -1,5 +1,5 @@
 <template>
-  <v-snackbar v-model="show" color="success" top>{{ message }}</v-snackbar>
+  <v-snackbar v-model="show" color="success" bottom>{{ message }}</v-snackbar>
 </template>
 
 <script>
@@ -10,19 +10,13 @@ export default {
     };
   },
   props: ['message'],
-  /*created() {
-    this.$store.watch(
-      state => state.success,
-      () => {
-        const msg = this.$store.state.success;
-        console.log("Success: "+msg)
-        if (msg !== "") {
-          this.show = true;
-          this.message = msg
-        }
+  watch: {
+    show(newValue){
+      if(!newValue){
+        this.$store.commit('setSuccessMessage', null)
       }
-    );
-  }*/
+    }
+  }
 };
 </script>
 

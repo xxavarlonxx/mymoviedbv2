@@ -110,6 +110,7 @@ export default {
             formData.append('type', type)
             try{
                 await this.$http.post('/movie', formData)
+                this.$store.commit('setSuccessMessage', "Added '"+selectedMovie.title+"' successfully")
                 this.dialog = false
                 this.searchText = ''
                 this.select = ''

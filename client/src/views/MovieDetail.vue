@@ -164,6 +164,7 @@ export default {
         this.hasError = false
         try{
           await this.$http.delete('/movie/'+this.movie.id)
+          this.$store.commit('setSuccessMessage', "Delete '"+ this.movie.title+ "' successfully")
            window.history.length > 1
             ? this.$router.go(-1)
             : this.$router.push("/home");

@@ -67,7 +67,7 @@
       </v-layout>
     </v-container>
     <Loading :value="loading" message="Loading library..."/>
-    <Success />
+    <Success :message="successMessage" v-if="successMessage != null"/>
   </v-content>
 </template>
 
@@ -86,7 +86,7 @@ export default {
         { title: "Added", icon: "add_box", prop: "created_at" }
       ],
       //currentSort: { title: "Title", icon: "title", prop: "title" },
-      filterResults: []
+      filterResults: [],
       //loading: false,
       //filteredItems: []
     };
@@ -100,6 +100,9 @@ export default {
     },
     errorMessage(){
       return this.$store.getters.errorMessage
+    },
+    successMessage(){
+      return this.$store.getters.successMessage
     },
     loading(){
       return this.$store.getters.loading
@@ -134,6 +137,7 @@ export default {
     },
   },
   created() {
+    console.log('created')
     if(this.searchVisible){
       this.searchText = this.previousSearchText
       this.search()

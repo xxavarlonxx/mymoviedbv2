@@ -72,9 +72,8 @@ export default {
       }
     },
     logout() {
-      this.$store.dispatch("logout").then(() => {
-        this.$router.push("/login");
-      });
+      this.$store.commit('destroyAccessToken')
+      this.$router.push("/login");
     },
     toggleSearch() {
       this.$store.commit("toggleSearch");
@@ -83,14 +82,10 @@ export default {
       this.$store.dispatch("fetchMovies")
     },
     onDeleteMovie(){
-      //if(this.currentMovie !== null){
-          this.$store.commit("toggleConfirmDialog");
-      //}
+     this.$store.commit("toggleConfirmDialog");
     },
     onEditMovie(){
-      //if(this.currentMovie !== null){
-        this.$store.commit('toggleEditDialog')
-      //}
+      this.$store.commit('toggleEditDialog')
     },
     onBack() {
       if (this.$route.name === "movie") {

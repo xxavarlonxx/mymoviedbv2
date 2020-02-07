@@ -19,7 +19,7 @@ export default new Vuex.Store({
       showConfirmDialog: false,
       showEditDialog: false,
       signupDialog: false,
-      success: "",
+      successMessage: null,
   },
   getters: {
     token: (state) => {
@@ -49,8 +49,8 @@ export default new Vuex.Store({
     signupDialog(state){
       return state.signupDialog
     },
-    success(state){
-      return state.success
+    successMessage(state){
+      return state.successMessage
     },
     loggedIn(state){
       return state.access_token !== null
@@ -78,7 +78,7 @@ export default new Vuex.Store({
     },
     destroyAccessToken(state){
       state.access_token = null
-      state.expiresIn = null
+      localStorage.removeItem('access_token')
     },
     setMovies(state, movies){
       state.movies = movies
@@ -111,8 +111,9 @@ export default new Vuex.Store({
     setErrorMessage(state, errorMessage){
       state.errorMessage = errorMessage
     },
-    
-    
+    setSuccessMessage(state, successMessage){
+      state.successMessage = successMessage
+    },
     sortBy(state, sort){
       if(sort !== undefined){
         state.currentSort = sort
@@ -125,26 +126,14 @@ export default new Vuex.Store({
     }
   },
   actions: {
-      logout(context){
-        new Promise((resolve)=> {
-          context.commit('clearError')
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('expiresIn')
-          context.commit('destroyAccessToken')
-          resolve()
-        })
-      },
       async fetchMovies({commit}){
         commit('setLoading', true)
         commit('setErrorMessage', null)
         try{
           const response = await this.$http.get('/movies')
-          console.log(response.data)
           commit('setMovies', response.data)
           commit('setFilteredMovies', response.data)
         }catch(e){
-          console.log(e)
-            console.log(e.response.data)
             commit('setErrorMessage', 'An unknown error occured. Try it later again or contact the system administrator. ('+ e.response.status+')')
         }finally{
           commit('setLoading', false)

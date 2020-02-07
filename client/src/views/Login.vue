@@ -110,9 +110,9 @@ export default {
       let data = response.data
       let status = response.status
       if(status === 401){
-        this.errorMessage = 'E-Mail Adresse oder Passwort sind inkorrekt!'
+        this.errorMessage = 'Your email adress or password is incorrect!'
       }else{
-        this.errorMessage = 'Es ist ein unbekannter Fehler aufgetreten. Versuchen sie es später nochmal'
+        this.errorMessage = 'An unknown error occured. Try it later again or contact the system administrator. ('+ response.status+')'
       }
     }
     
