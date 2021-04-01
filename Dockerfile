@@ -11,4 +11,4 @@ COPY --from=ui-builder /usr/src/app/dist ./public
 COPY server/package*.json ./
 RUN npm install --quiet
 COPY server/ ./
-
+RUN npm install -g @adonisjs/cli

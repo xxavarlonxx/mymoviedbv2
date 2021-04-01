@@ -8,7 +8,7 @@ module.exports = {
     //proxy: 'http://dev:3000/',
     proxy: {
       '/api': {
-        target: 'http://app:3333',
+        target: 'http://localhost:3333',
         changeOrigin: true,
       },
     },
