@@ -1,6 +1,10 @@
 client
 .env.example
+.env
+.env.prod
 node_modules
 Jenkinsfile
 dev.dockerfile
 docker-compose.yml
+.gitignore
+Jenkinsfile

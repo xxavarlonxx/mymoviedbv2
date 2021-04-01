@@ -3,25 +3,15 @@ pipeline{
         registry = "hub.ahochschulte.de/mymoviedbv2"
         registryCredential = "privatehub"
         dockerImage = ''
-        dockerFile = 'server/prod.dockerfile'
     }
 
     agent any
     tools {nodejs "node"}
     stages{
-        stage("Build Frontend"){
-            steps{
-                script{
-                    sh 'node --version'
-                    sh 'cd client && npm install'
-                    sh 'cd client && npm run build'
-                }
-            }
-        }
         stage('Build image'){
             steps{
                 script {
-                    dockerImage = docker.build(registry + ":$BUILD_NUMBER", "-f "+ dockerFile+" server")
+                    dockerImage = docker.build(registry + ":$BUILD_NUMBER")
                 }
             }
         }
@@ -40,7 +30,7 @@ pipeline{
         stage('Publish on remote server'){
             steps{
                 script{
-                    sh 'ssh dev@81.169.193.248 "cd ~/node/mymoviedbV2 && docker-compose pull app && docker-compose up -d"'
+                    sh 'ssh andre@136.243.169.235 "cd ~/docker/mymoviedbv2 && docker-compose pull && docker-compose up -d"'
                 }
             }
             
